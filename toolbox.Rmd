@@ -486,6 +486,63 @@ $$\|Ax -b \| \leq \|x - A^{-1}b\| \leq \kappa\|Ax-b \| $$
 can you prove it?
 :::
 
+### Nonlinear amplitude transformation
+
+Here, we review the result from [guo2021, arthur 2023].
+Given access to a quantum circuit which prepares the state $U:\ket{0}\rightarrow\sum_{k=1}^N \psi_k\ket{k}$,
+the target is to implement a polynomial function $f(x)$ onto the amplitudes and output the final state $\frac{1}{\mathcal{N}} \sum_{k=1}^N f(c_k)\ket{k}$,
+where $\mathcal{N}$ is the normalization factor.
+Though current method did not fully solve this problem, they have shown how to implement functions onto real or imaginary parts of the amplitudes.
+For many applications, it suffices to only consider about the real values, i.e., the amplitudes are real, so this method can be used in many cases.
+For simplicity, here we consider the case when amplitudes are real.
+The key idea for this method is to construct a block encoding of amplitudes, so that later one can use QSVT to implement nonlinear transformations to the amplitudes.
+By preparing the initial state $\frac{1}{\sqrt{N}}\sum_k \ket{k}$ or $\sum_{k=1}^N \psi_k\ket{k}$.
+
+```{theorem, qlap, name="Block encoding of amplitudes, should change citation (ref:CGJ18),(ref:gilyen2019quantum)"}
+Given a state preparation circuit, one can construct a block encoding of a diagonal matrix $A=\mathrm{diag}(\psi_1,\dots,\psi_N)$ by using controlled-$U$, controlled-$U^\dagger$ four times, and $\mathcal{O}(n)$ one- and two-qubit gates.
+```
+First, we construct a unitary whose eigenvalues encode the information of $psi_k$.
+Let $W$ be a sequence of unitary operations as shown in Fig. \ref{fig:11}.
+Note that,
+\begin{align}
+    W\ket{k}_{\mathrm{ad}}\ket{0}_{\mathrm{da,B}} &= \frac{\ket{k}}{2}_{\mathrm{ad}}\biggl(\bigl(\sum_{j=1}^N c_j\ket{j}+\ket{k}\bigl)_{\mathrm{da}}\ket{0}_{\mathrm{B}}\notag\\
+        &+\bigl(\sum_{j=1}^Nc_j\ket{j}-\ket{k}\bigl)_{\mathrm{da}}\ket{1}_{\mathrm{B}}\biggl). \label{eq:op_W}
+\end{align}
+Let $S_0:=\mathcal{I}_{n+1}-2|0\rangle\langle 0|_{\mathrm{da,B}}$ be a conditional phase-shift gate on the data qubits and ancilla qubit B, and $Z_{\mathrm{B}}$ be the $Z$ gate acting on the ancilla qubit B.
+With these operations, we define 
+\begin{align}\label{eq:def_G}
+    G:=WS_0 W^\dagger Z_{\mathrm{B}},
+\end{align}
+which is shown in Fig. \ref{fig:12}.
+For $k\in\{1,\dots,N\}$, we define the following normalized states
+\begin{align}
+    \ket{\Psi_{k0}}_{\mathrm{da,B}}:=\frac{1}{2\alpha_k}\biggl(&\sum_j c_j\ket{j}+\ket{k}\biggl)_{\mathrm{da}}\ket{0}_{\mathrm{B}}\label{eigenstat0}\\
+    \ket{\Psi_{k1}}_{\mathrm{da,B}}:=\frac{1}{2\beta_k}\biggl(&\sum_j c_j\ket{j}-\ket{k}\biggl)_{\mathrm{da}}\ket{1}_{\mathrm{B}}\label{eigenstat1},
+\end{align}
+where $\alpha_k=\sqrt{\frac{1}{2}(1+psi_k)}$, $\beta_k=\sqrt{\frac{1}{2}(1-psi_k)}$.
+By computation, one can show that eigenvectors of $G$ are
+\begin{align}\label{eq:eigenvector_G}
+    \ket{k}_{\mathrm{ad}}\ket{\Psi_{k\pm}}_{\mathrm{da,B}}:=\frac{1}{\sqrt{2}}\ket{k}_{\mathrm{ad}}\left(\ket{\Psi_{k0}}\pm\ket{\Psi_{k1}}\right)_{\mathrm{da,B}},
+\end{align}
+with the corresponding eigenvalues $-x_k \pm i\sqrt{1-x_k^2}$.
+We neglect other eigenstates of $G$ since we are only interested in the subspace which encodes amplitudes.
+However, since our target is to achieve an operator as Eq. (\ref{BCFA1}), we need to remove the imaginary part of eigenvalues.
+
+We achieve this by the circuit in Fig. \ref{fig:13} where we use controlled versions of $G$ and $G^\dagger$.
+The idea is that the imaginary part of eigenvalues can be canceled by implementing $\frac{1}{2}(G+G^\dagger)$.
+Define $\tilde{G}$ as shown in Fig. \ref{fig:13}.
+We then have
+\begin{align}
+(\bra{0}\otimes\mathcal{I}_{2n+1})\ \tilde{G} \ (\ket{0}\otimes \mathcal{I}_{2n+1})=-\frac{1}{2}(G+G^\dagger).
+\end{align}
+Therefore, $\tilde{G}$ is a $(1,1,0)$-block-encoding of Hermitian matrix $-\frac{1}{2}(G+G^\dagger)$.
+Eigenvalues of $-\frac{1}{2}(G+G^\dagger)$ are
+$\{psi_k\}_{k=1}^N$.
+To construct $\tilde{G}$, we need to use controlled-$U$, controlled-$U^\dagger$ four times, and $\mathcal{O}(n)$ one- and two-qubit gates. 
+Details of gate count are provided in Appendix \ref{app.num.gates}. 
+
+
+
 ## Distances, inner products, norms, and quadratic forms {#sub:distances}
 
 
